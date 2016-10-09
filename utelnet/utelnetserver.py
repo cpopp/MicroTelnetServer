@@ -1,6 +1,7 @@
 import socket
 import network
 import uos
+import errno
 
 last_client_socket = None
 server_socket = None
@@ -19,22 +20,37 @@ class TelnetWrapper():
                 # discard telnet control characters
                 if byte == 0xFF:
                     self.discard_count = 2
-                    byte = 10
+                    byte = ord("a")
                 elif self.discard_count > 0:
                     self.discard_count -= 1
-                    byte = 10
+                    byte = ord("b")
                 b[i] = byte
                 # print("Read {}".format(b[i]))
                 readbytes += 1
-            except (OSError, IndexError):
-                if readbytes == 0:
-                    return None
+            except OSError as e:
+                if len(e.args) > 0 and e.args[0] == errno.EAGAIN:
+                    if readbytes == 0:
+                        return None
+                    else:
+                        return readbytes
                 else:
-                    return readbytes
+                    raise
         return readbytes
     
     def write(self, data):
-        self.socket.sendall(data)
+        # we need to write all the data but it's a non-blocking socket
+        # so loop until it's all written eating EAGAIN exceptions
+        while len(data) > 0:
+            try:
+                written_bytes = self.socket.write(data)
+                data = data[written_bytes:]
+            except OSError as e:
+                if len(e.args) > 0 and e.args[0] == errno.EAGAIN:
+                    # can't write yet, try again
+                    pass
+                else:
+                    # something else...propagate the exception
+                    raise
     
     def close(self):
         self.socket.close()
