@@ -34,7 +34,7 @@ class TelnetWrapper():
         return readbytes
     
     def write(self, data):
-        return self.socket.write(data)
+        self.socket.sendall(data)
     
     def close(self):
         self.socket.close()
