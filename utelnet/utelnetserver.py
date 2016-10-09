@@ -25,10 +25,10 @@ class TelnetWrapper():
                     self.discard_count -= 1
                     byte = 10
                 b[i] = byte
-
+                
                 readbytes += 1
-            except OSError as e:
-                if len(e.args) > 0 and e.args[0] == errno.EAGAIN:
+            except (IndexError, OSError) as e:
+                if type(e) == IndexError or len(e.args) > 0 and e.args[0] == errno.EAGAIN:
                     if readbytes == 0:
                         return None
                     else:
