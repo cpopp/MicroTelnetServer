@@ -20,10 +20,10 @@ class TelnetWrapper():
                 # discard telnet control characters
                 if byte == 0xFF:
                     self.discard_count = 2
-                    byte = ord("a")
+                    byte = 10
                 elif self.discard_count > 0:
                     self.discard_count -= 1
-                    byte = ord("b")
+                    byte = 10
                 b[i] = byte
                 # print("Read {}".format(b[i]))
                 readbytes += 1
