@@ -25,7 +25,7 @@ class TelnetWrapper():
                     self.discard_count -= 1
                     byte = 10
                 b[i] = byte
-                # print("Read {}".format(b[i]))
+
                 readbytes += 1
             except OSError as e:
                 if len(e.args) > 0 and e.args[0] == errno.EAGAIN:
