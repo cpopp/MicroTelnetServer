@@ -16,14 +16,18 @@ class TelnetWrapper():
         readbytes = 0
         for i in range(len(b)):
             try:
-                byte = self.socket.recv(1)[0]
-                # discard telnet control characters
-                if byte == 0xFF:
-                    self.discard_count = 2
-                    byte = 10
-                elif self.discard_count > 0:
-                    self.discard_count -= 1
-                    byte = 10
+                byte = 0
+                # discard telnet control characters and
+                # null bytes 
+                while(byte == 0):
+                    byte = self.socket.recv(1)[0]
+                    if byte == 0xFF:
+                        self.discard_count = 2
+                        byte = 0
+                    elif self.discard_count > 0:
+                        self.discard_count -= 1
+                        byte = 0
+                    
                 b[i] = byte
                 
                 readbytes += 1
