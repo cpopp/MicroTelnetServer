@@ -73,14 +73,31 @@ def accept_telnet_connect(telnet_server):
     
     last_client_socket, remote_addr = telnet_server.accept()
     print("Telnet connection from:", remote_addr)
-    last_client_socket.setblocking(False)
-    # dupterm_notify() not available under MicroPython v1.1
-    # last_client_socket.setsockopt(socket.SOL_SOCKET, 20, uos.dupterm_notify)
+    if check_pass(last_client_socket):
+        last_client_socket.setblocking(False)
+        # dupterm_notify() not available under MicroPython v1.1
+        # last_client_socket.setsockopt(socket.SOL_SOCKET, 20, uos.dupterm_notify)
     
-    last_client_socket.sendall(bytes([255, 252, 34])) # dont allow line mode
-    last_client_socket.sendall(bytes([255, 251, 1])) # turn off local echo
+        last_client_socket.sendall(bytes([255, 252, 34])) # dont allow line mode
+        last_client_socket.sendall(bytes([255, 251, 1])) # turn off local echo
     
-    uos.dupterm(TelnetWrapper(last_client_socket))
+        uos.dupterm(TelnetWrapper(last_client_socket))
+    else:
+        print("bad pass; rejected")
+        last_client_socket.close()
+
+def check_pass(prospect):
+    maxtries=3
+    mypass=prospect.recv(4096) # flush junk from buffer (some clients send metainfo first, e.g. 255,253,3,... )
+    while not mypass.startswith('pass'): # beware line-end
+        prospect.sendall(b"\r\nPassword: ")
+        mypass= prospect.readline()
+        maxtries=maxtries-1
+        if maxtries<=0:
+            prospect.sendall(b"\r\nGoodbye\r\n")
+            return False
+    prospect.sendall(b"\r\nWelcome.\r\n>>> ")
+    return True
 
 def stop():
     global server_socket, last_client_socket
